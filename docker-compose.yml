@@ -1,0 +1,10 @@
+services:
+  mockora:
+    build: .
+    image: mockora:latest
+    container_name: mockora
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
