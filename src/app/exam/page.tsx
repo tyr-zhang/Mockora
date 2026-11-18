@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadSetup } from "@/lib/clientSession";
+import { apiPath } from "@/lib/basePath";
 import { consumeSse } from "@/lib/clientSse";
 import AlgorithmPanel from "@/components/AlgorithmPanel";
 import type { AlgoLanguage, AlgorithmQuestion, AlgorithmRunResult, InterviewReport, TopicRecord } from "@/types/interview";
@@ -40,7 +41,7 @@ export default function ExamPage() {
     if (setup && !bootstrapped.current) {
       bootstrapped.current = true;
       void requestNextTurn(setup, [], null);
-      fetch("/api/interview/classify-technical", {
+      fetch(apiPath("/api/interview/classify-technical"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole }),
@@ -67,7 +68,7 @@ export default function ExamPage() {
     setError(null);
     const fullHistory = openTopic ? [...history, openTopic] : history;
     try {
-      const res = await fetch("/api/exam/turn", {
+      const res = await fetch(apiPath("/api/exam/turn"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, history: fullHistory }),
@@ -148,7 +149,7 @@ export default function ExamPage() {
     setStreamingMessage("");
     setPhase("waiting_ai");
     try {
-      const res = await fetch("/api/algorithm/generate", {
+      const res = await fetch(apiPath("/api/algorithm/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole }),
@@ -213,7 +214,7 @@ export default function ExamPage() {
     setPhase("generating_report");
     setError(null);
     try {
-      const res = await fetch("/api/exam/report", {
+      const res = await fetch(apiPath("/api/exam/report"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, history }),

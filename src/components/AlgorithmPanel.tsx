@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AlgoLanguage, AlgorithmQuestion, AlgorithmRunResult } from "@/types/interview";
+import { apiPath } from "@/lib/basePath";
 
 /** 根据样例测试用例的实际值，推断出一个足够贴合题目的 Java 静态类型（仅覆盖常见题型）。 */
 function inferJavaType(value: unknown): string {
@@ -70,7 +71,7 @@ export default function AlgorithmPanel({
     setRunning(true);
     setRunError(null);
     try {
-      const res = await fetch("/api/algorithm/run", {
+      const res = await fetch(apiPath("/api/algorithm/run"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

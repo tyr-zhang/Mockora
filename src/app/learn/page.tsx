@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadSetup } from "@/lib/clientSession";
+import { apiPath } from "@/lib/basePath";
 import { consumeSse } from "@/lib/clientSse";
 import AlgorithmPanel from "@/components/AlgorithmPanel";
 import type { AlgorithmQuestion, TopicRecord } from "@/types/interview";
@@ -46,7 +47,7 @@ export default function LearnPage() {
     if (setup && !bootstrapped.current) {
       bootstrapped.current = true;
       void fetchNextQuestion(setup, []);
-      fetch("/api/interview/classify-technical", {
+      fetch(apiPath("/api/interview/classify-technical"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole }),
@@ -117,7 +118,7 @@ export default function LearnPage() {
     ]);
 
     try {
-      const res = await fetch("/api/learn/question", {
+      const res = await fetch(apiPath("/api/learn/question"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -186,7 +187,7 @@ export default function LearnPage() {
     ]);
 
     try {
-      const res = await fetch("/api/algorithm/generate", {
+      const res = await fetch(apiPath("/api/algorithm/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole }),
@@ -228,7 +229,7 @@ export default function LearnPage() {
     setFollowUpReply("");
     setError(null);
     try {
-      const res = await fetch("/api/learn/follow-up", {
+      const res = await fetch(apiPath("/api/learn/follow-up"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

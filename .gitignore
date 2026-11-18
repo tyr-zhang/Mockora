@@ -41,6 +41,9 @@ yarn-error.log*
 .idea/
 .playwright-cli/
 
+# deploy artifacts
+*.tar.gz
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

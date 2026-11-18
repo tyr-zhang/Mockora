@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveSetup } from "@/lib/clientSession";
+import { apiPath } from "@/lib/basePath";
 import type { InterviewMode } from "@/types/interview";
 
 export default function HomePage() {
@@ -37,9 +38,9 @@ export default function HomePage() {
       if (resumeSource === "file" && file) {
         const formData = new FormData();
         formData.append("file", file);
-        res = await fetch("/api/resume", { method: "POST", body: formData });
+        res = await fetch(apiPath("/api/resume"), { method: "POST", body: formData });
       } else {
-        res = await fetch("/api/resume", {
+        res = await fetch(apiPath("/api/resume"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
