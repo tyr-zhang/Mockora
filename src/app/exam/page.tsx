@@ -22,6 +22,10 @@ export default function ExamPage() {
   const [report, setReport] = useState<InterviewReport | null>(null);
   const [algorithmQuestion, setAlgorithmQuestion] = useState<AlgorithmQuestion | null>(null);
   const [algorithmSubmitting, setAlgorithmSubmitting] = useState(false);
+  // 作弊指令（whosyourdaddy）生成的参考答案：仅本地展示，不写入面试记录
+  const [cheatAnswer, setCheatAnswer] = useState("");
+  const [cheatLoading, setCheatLoading] = useState(false);
+  const [cheatError, setCheatError] = useState<string | null>(null);
   const bootstrapped = useRef(false);
   const reqSeq = useRef(0);
   const pendingReportHistory = useRef<TopicRecord[] | null>(null);
@@ -66,6 +70,9 @@ export default function ExamPage() {
     setPhase("waiting_ai");
     setStreamingMessage("");
     setError(null);
+    // 进入下一轮（新问题/追问/结束）时清掉作弊答案，避免残留到下一题
+    setCheatAnswer("");
+    setCheatError("");
     const fullHistory = openTopic ? [...history, openTopic] : history;
     try {
       const res = await fetch(apiPath("/api/exam/turn"), {
@@ -237,8 +244,53 @@ export default function ExamPage() {
     void generateReport(setup, pendingReportHistory.current);
   }
 
+  /**
+   * 作弊指令：对当前题目按需生成参考答案，流式展示在本地。
+   * 答案不进入 currentTopic/closedTopics，面试官与最终报告都看不到。
+   */
+  async function revealCheatAnswer() {
+    if (!setup || !currentTopic) return;
+    const question = [...currentTopic.messages].reverse().find((m) => m.role === "interviewer")?.content;
+    if (!question) return;
+    setCheatLoading(true);
+    setCheatError(null);
+    setCheatAnswer("");
+    try {
+      const res = await fetch(apiPath("/api/exam/answer"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole, question }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "生成参考答案失败");
+      }
+      let answer = "";
+      await consumeSse(res, (event) => {
+        if (event.type === "answer_delta") {
+          answer += event.chunk as string;
+          setCheatAnswer(answer);
+        } else if (event.type === "done") {
+          setCheatAnswer((event.answer as string) ?? answer);
+        } else if (event.type === "error") {
+          throw new Error(event.error as string);
+        }
+      });
+    } catch (err) {
+      setCheatError(err instanceof Error ? err.message : "生成参考答案失败");
+    } finally {
+      setCheatLoading(false);
+    }
+  }
+
   function submitAnswer() {
     if (!setup || !currentTopic || !draft.trim()) return;
+    // 作弊指令：不作为回答提交，仅展示参考答案，继续等待真实回答
+    if (draft.trim().toLowerCase() === "whosyourdaddy") {
+      setDraft("");
+      void revealCheatAnswer();
+      return;
+    }
     const updated: TopicRecord = {
       ...currentTopic,
       messages: [...currentTopic.messages, { role: "candidate", content: draft.trim() }],
@@ -411,6 +463,17 @@ export default function ExamPage() {
               跳过本题
             </button>
           </div>
+        </div>
+      )}
+
+      {(cheatAnswer || cheatLoading || cheatError) && phase === "waiting_user" && !currentTopic?.isAlgorithm && (
+        <div className="card">
+          <div className="chat-bubble answer">
+            <span className="role-tag">参考答案（作弊指令，不计入面试记录）</span>
+            {cheatAnswer}
+            {cheatLoading && <span className="loading-dots" />}
+          </div>
+          {cheatError && <p className="error-text">{cheatError}</p>}
         </div>
       )}
 

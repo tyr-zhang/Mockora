@@ -116,6 +116,24 @@ export async function streamLearningFollowUp(
   return runTextStream(learningFollowUpAgent, input, onDelta);
 }
 
+/* ---------------- 参考答案按需生成（考试模式作弊指令 whosyourdaddy） ---------------- */
+
+/**
+ * 考试模式的题目由面试官 Agent 现场生成，没有预存参考答案；
+ * 作弊指令触发时按需生成一份。答案只流式展示给候选人本地，
+ * 不写入面试记录（history），因此不影响面试官的追问决策与最终评估报告。
+ */
+export async function streamReferenceAnswer(
+  resumeText: string,
+  targetRole: string,
+  question: string,
+  onDelta: (chunk: string) => void
+) {
+  const input =
+    `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n【本题题目】${question}\n\n请给出这道题的参考答案。`;
+  return runTextStream(learningAnswerAgent, input, onDelta);
+}
+
 /* ---------------- 简历清洗 Agent：剔除网页/PDF 抽取文本中的模板噪音 ---------------- */
 
 /**
