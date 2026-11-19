@@ -1,0 +1,101 @@
+{
+  "id": "jump-game",
+  "difficulty": "medium",
+  "title": "服务节点跳转可达性",
+  "descriptionLines": [
+    "一组服务节点排成一行，数组 nums[i] 表示从第 i 个节点最多可以向前跳 nums[i] 步。初始位于第 0 个节点，请判断能否跳到最后一个节点。",
+    "",
+    "要求：",
+    "1. 数组非空，1 <= nums.length <= 1000，0 <= nums[i] <= 100000。",
+    "2. 尝试用贪心算法做到 O(n) 时间。",
+    "",
+    "函数签名：canJump(nums)",
+    "返回值示例：nums = [2,3,1,1,4] 时，先跳 1 步到节点 1，再跳 3 步到末尾，返回 true"
+  ],
+  "functionName": "canJump",
+  "paramNames": [
+    "nums"
+  ],
+  "approachExplanation": "贪心维护最远可达位置 reach：从左到右扫描，若当前下标 i 已经超过 reach 说明断层、必然不可达；否则用 i + nums[i] 更新 reach。只要全程没有断层，扫描到末尾即返回 true。每个节点只访问一次，时间 O(n)、空间 O(1)。",
+  "referenceSolutionLines": [
+    "function canJump(nums) {",
+    "  let reach = 0;",
+    "  for (let i = 0; i < nums.length; i++) {",
+    "    if (i > reach) return false;",
+    "    if (i + nums[i] > reach) reach = i + nums[i];",
+    "  }",
+    "  return true;",
+    "}"
+  ],
+  "expectedOutputs": [
+    true,
+    false,
+    true,
+    true,
+    true,
+    false
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          2,
+          3,
+          1,
+          1,
+          4
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          3,
+          2,
+          1,
+          0,
+          4
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          0
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1,
+          2
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          2,
+          0,
+          0
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

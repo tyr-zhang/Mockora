@@ -1,0 +1,94 @@
+{
+  "id": "coin-change",
+  "difficulty": "medium",
+  "title": "最少找零硬币数",
+  "descriptionLines": [
+    "给定不同面额的硬币数组 coins 和一个总金额 amount，每种硬币数量不限，计算凑成总金额所需的最少硬币个数。如果无法凑出，返回 -1。",
+    "",
+    "要求：",
+    "1. 1 <= coins.length <= 20，硬币面额为正整数且互不相同。",
+    "2. 0 <= amount <= 1000。",
+    "3. 尝试用动态规划做到 O(amount * coins.length)。",
+    "",
+    "函数签名：coinChange(coins, amount)",
+    "返回值示例：coins = [1,2,5], amount = 11 时，5+5+1 共 3 枚，返回 3"
+  ],
+  "functionName": "coinChange",
+  "paramNames": [
+    "coins",
+    "amount"
+  ],
+  "approachExplanation": "完全背包型动态规划：dp[i] 表示凑出金额 i 的最少硬币数，边界 dp[0] = 0，其余初始化为无穷大。转移方程 dp[i] = min(dp[i - c] + 1)，对每种面额 c <= i 各试一次。最终 dp[amount] 若仍是无穷大则返回 -1。注意这是「每枚硬币可重复使用」的完全背包，与 0-1 背包的区别在遍历顺序上也可以展开聊。",
+  "referenceSolutionLines": [
+    "function coinChange(coins, amount) {",
+    "  const INF = Infinity;",
+    "  const dp = new Array(amount + 1).fill(INF);",
+    "  dp[0] = 0;",
+    "  for (let i = 1; i <= amount; i++) {",
+    "    for (const c of coins) {",
+    "      if (c <= i && dp[i - c] + 1 < dp[i]) dp[i] = dp[i - c] + 1;",
+    "    }",
+    "  }",
+    "  return dp[amount] === INF ? -1 : dp[amount];",
+    "}"
+  ],
+  "expectedOutputs": [
+    3,
+    2,
+    -1,
+    0,
+    -1
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          1,
+          2,
+          5
+        ],
+        11
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          1,
+          3,
+          4
+        ],
+        6
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          2
+        ],
+        3
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1
+        ],
+        0
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          5,
+          7
+        ],
+        11
+      ],
+      "hidden": true
+    }
+  ]
+}

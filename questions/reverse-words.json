@@ -1,0 +1,65 @@
+{
+  "id": "reverse-words",
+  "difficulty": "medium",
+  "title": "反转日志中的单词顺序",
+  "descriptionLines": [
+    "给定一个字符串 s，由若干单词组成，单词之间用一个或多个空格分隔。请返回一个字符串，把单词顺序反转，并用单个空格连接；结果首尾不应有空格。",
+    "",
+    "要求：",
+    "1. 字符串可能为空或只包含空格，此时返回空字符串。",
+    "2. 单词内部不含空格。",
+    "",
+    "函数签名：reverseWords(s)",
+    "返回值示例：s = 'the sky is blue' 时返回 'blue is sky the'"
+  ],
+  "functionName": "reverseWords",
+  "paramNames": [
+    "s"
+  ],
+  "approachExplanation": "三步走：先 trim 去掉首尾空格，再按连续空白切分成单词数组（正则 \\s+ 可以一次性处理多个空格），最后反转数组并用单个空格 join。注意空字符串的边界：切分后要过滤掉空串再 join，否则会产生多余空格。整体 O(n)。也可以用双指针从右向左扫描原地提取单词，做到 O(1) 额外空间（忽略输出）。",
+  "referenceSolutionLines": [
+    "function reverseWords(s) {",
+    "  const words = s.trim().split(/\\s+/).filter(Boolean);",
+    "  return words.reverse().join(' ');",
+    "}"
+  ],
+  "expectedOutputs": [
+    "blue is sky the",
+    "world hello",
+    "a",
+    "",
+    "b a"
+  ],
+  "testInputs": [
+    {
+      "input": [
+        "the sky is blue"
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "  hello world  "
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "a"
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        ""
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "  a   b "
+      ],
+      "hidden": true
+    }
+  ]
+}

@@ -28,8 +28,9 @@ function starterCode(language: AlgoLanguage, q: AlgorithmQuestion): string {
     return `function ${q.functionName}(${params}) {\n  // TODO: 在此实现\n}`;
   }
   if (language === "java") {
-    const sample = q.testCases[0];
-    const paramTypes = q.paramNames.map((p, i) => `${inferJavaType(sample?.input[i])} ${p}`).join(", ");
+    // 客户端拿到的题目是脱敏视图，隐藏用例不带 input，取第一个可见用例推断 Java 类型
+    const sample = q.testCases.find((tc) => !tc.hidden && tc.input !== undefined);
+    const paramTypes = q.paramNames.map((p, i) => `${inferJavaType(sample?.input?.[i])} ${p}`).join(", ");
     const returnType = inferJavaType(sample?.expectedOutput);
     return `class Solution {\n  public static ${returnType} ${q.functionName}(${paramTypes}) {\n    // TODO: 在此实现\n    return ${javaDefaultValue(returnType)};\n  }\n}`;
   }
@@ -75,10 +76,9 @@ export default function AlgorithmPanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          questionId: question.questionId,
           language,
           code,
-          functionName: question.functionName,
-          testCases: question.testCases,
         }),
       });
       const data = await res.json();

@@ -1,0 +1,105 @@
+{
+  "id": "container-most-water",
+  "difficulty": "medium",
+  "title": "盛最多水的池壁",
+  "descriptionLines": [
+    "给定一个长度为 n 的整数数组 height，第 i 条垂线的高度为 height[i]。从中选择两条线与 x 轴共同构成容器，容器容量 = 两线中较矮的高度 × 两线下标之差。请返回能构成的最大容量。",
+    "",
+    "要求：",
+    "1. n >= 2，高度为非负整数。",
+    "2. 尝试用双指针做到 O(n) 时间。",
+    "",
+    "函数签名：maxArea(height)",
+    "返回值示例：height = [1,8,6,2,5,4,8,3,7] 时返回 49"
+  ],
+  "functionName": "maxArea",
+  "paramNames": [
+    "height"
+  ],
+  "approachExplanation": "对撞双指针 + 贪心收缩：左指针 lo、右指针 hi 从两端出发，每次计算当前容量后，移动较矮的那一侧。理由是容量受短板限制：只要短板不动，无论怎么移动另一侧，宽度都在减小而高度不会超过短板，容量不可能变大；只有移动短板才有可能遇到更高的线使容量增大。每轮排除一根线，共 n-1 轮，时间 O(n)。",
+  "referenceSolutionLines": [
+    "function maxArea(height) {",
+    "  let lo = 0;",
+    "  let hi = height.length - 1;",
+    "  let best = 0;",
+    "  while (lo < hi) {",
+    "    const h = Math.min(height[lo], height[hi]);",
+    "    const area = h * (hi - lo);",
+    "    if (area > best) best = area;",
+    "    if (height[lo] < height[hi]) lo++;",
+    "    else hi--;",
+    "  }",
+    "  return best;",
+    "}"
+  ],
+  "expectedOutputs": [
+    49,
+    16,
+    1,
+    2,
+    17
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          4,
+          3,
+          2,
+          1,
+          4
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          1,
+          1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1,
+          2,
+          1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          2,
+          3,
+          4,
+          5,
+          18,
+          17,
+          6
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

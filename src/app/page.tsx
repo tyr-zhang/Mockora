@@ -127,7 +127,7 @@ export default function HomePage() {
         {error && <p className="error-text">{error}</p>}
 
         <button onClick={handleStart} disabled={loading}>
-          {loading ? "正在解析简历..." : "开始面试"}
+          {loading ? "正在解析并清洗简历（约需几十秒）..." : "开始面试"}
         </button>
       </div>
     </div>

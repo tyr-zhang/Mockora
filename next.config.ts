@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
   // PDF 会抛出 "ReferenceError: DOMMatrix is not defined"。
   outputFileTracingIncludes: {
     "/api/resume": ["./node_modules/@napi-rs/**/*"],
+    // 外置算法题库：generate 路由运行期读取 questions/*.json，
+    // 需显式追踪进 standalone 产物，否则部署后题库目录不存在。
+    "/api/algorithm/generate": ["./questions/**/*.json"],
   },
   turbopack: {
     root: __dirname,

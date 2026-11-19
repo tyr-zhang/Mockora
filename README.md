@@ -118,6 +118,51 @@ server {
 
 再配合 `certbot` 申请 HTTPS 证书即可。
 
+## 更新算法题库
+
+算法题库存放在项目根目录 `questions/`，一题一个 JSON 文件（文件名必须与题目的 `id` 一致），运行时由 `/api/algorithm/generate` 路由动态加载：
+
+- **本地开发**：在 `questions/` 下新增或修改 JSON 文件后立即生效（每次生成题目时重新扫描目录），无需重启。
+- **Docker 部署**：`docker-compose.yml` 已将宿主机 `./questions` 挂载到容器 `/app/questions`，在宿主机目录增删文件即可免重建更新。
+
+### 题目文件格式
+
+```json
+{
+  "id": "is-palindrome",
+  "difficulty": "easy",
+  "title": "回文日志串判定",
+  "descriptionLines": ["题面按行书写，加载时按换行拼接", "", "要求：..."],
+  "functionName": "isPalindrome",
+  "paramNames": ["s"],
+  "approachExplanation": "参考解法思路（学习模式展示）",
+  "referenceSolutionLines": ["function isPalindrome(s) {", "  ...", "}"],
+  "expectedOutputs": [true, false, true, true, false, true],
+  "testInputs": [
+    { "input": ["A man, a plan, a canal: Panama"], "hidden": false },
+    { "input": ["race a car"], "hidden": false },
+    { "input": [""], "hidden": true }
+  ]
+}
+```
+
+约定：
+
+- `descriptionLines` / `referenceSolutionLines` 按行书写（JSON 不支持多行字符串），加载时用换行拼接。
+- 前 2 个 `testInputs` 必须是可见用例（`hidden: false`），其余为隐藏用例；输入输出需为可 JSON 序列化的简单值（兼容 JS/Python/Java 判题）。
+- `expectedOutputs` 是人工核对的标准答案，仅用于校验；运行期期望输出实际由参考实现实跑得出。
+- 题面答案必须确定性唯一（回避"最长回文子串"这类多解返回值的题，可改考长度）。
+
+### 更新后务必校验
+
+```bash
+npm run bank:check
+```
+
+该脚本会严格校验所有题库文件：结构合法性、参考实现可执行、实跑结果与 `expectedOutputs` 一致，任何错误以非零码退出。运行期对单个非法文件只会跳过并打告警（不中断面试流程），请以本脚本作为加题安全网。
+
+> ⚠️ 安全提示：`referenceSolutionLines` 会在服务端作为 JavaScript 执行，`questions/` 目录的写权限等同于服务器代码执行权限，只应由可信人员维护。
+
 ## 注意事项
 
 - `OPENAI_API_KEY` 等敏感信息务必通过 `.env` 配置，不要提交到代码仓库（`.gitignore` 已默认忽略 `.env*`，仅保留 `.env.example`）。

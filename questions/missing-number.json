@@ -1,0 +1,89 @@
+{
+  "id": "missing-number",
+  "difficulty": "easy",
+  "title": "缺失的流水编号",
+  "descriptionLines": [
+    "交易流水的序号本应从 0 到 n 连续编号共 n+1 个，但数组 nums 中只有 n 个编号（互不相同），恰好缺失了一个。请找出缺失的那个编号。",
+    "",
+    "要求：",
+    "1. 数组长度 n 满足 1 <= n <= 1000，元素取值范围 [0, n] 且互不相同。",
+    "2. 时间复杂度尽量做到 O(n)，只使用常量额外空间。",
+    "",
+    "函数签名：missingNumber(nums)",
+    "返回值示例：nums = [3,0,1] 时，完整编号应为 0,1,2，缺失的是 2"
+  ],
+  "functionName": "missingNumber",
+  "paramNames": [
+    "nums"
+  ],
+  "approachExplanation": "等差数列求和法：0 到 n 的完整编号之和是 n*(n+1)/2，用这个理论总和减去数组实际元素之和，差值就是缺失的编号。一次遍历累加即可，时间 O(n)、空间 O(1)。也可以用异或法：把下标 0..n-1 与数组元素全部异或，再异或 n，成对的部分相互抵消，剩下的就是缺失值。",
+  "referenceSolutionLines": [
+    "function missingNumber(nums) {",
+    "  const n = nums.length;",
+    "  const total = (n * (n + 1)) / 2;",
+    "  let sum = 0;",
+    "  for (const x of nums) sum += x;",
+    "  return total - sum;",
+    "}"
+  ],
+  "expectedOutputs": [
+    2,
+    2,
+    8,
+    1,
+    0
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          3,
+          0,
+          1
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          0,
+          1
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          9,
+          6,
+          4,
+          2,
+          3,
+          5,
+          7,
+          0,
+          1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          0
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

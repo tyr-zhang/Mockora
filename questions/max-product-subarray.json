@@ -1,0 +1,106 @@
+{
+  "id": "max-product-subarray",
+  "difficulty": "medium",
+  "title": "最大连续盈亏乘积",
+  "descriptionLines": [
+    "给定一个整数数组 nums（含正数、负数和 0），请找出其中连续子数组的最大乘积。",
+    "",
+    "要求：",
+    "1. 子数组至少包含一个元素。",
+    "2. 数组非空，元素绝对值不超过 100，保证中间乘积在 32 位整数范围内。",
+    "3. 尝试做到 O(n) 时间。",
+    "",
+    "函数签名：maxProduct(nums)",
+    "返回值示例：nums = [2,3,-2,4] 时，子数组 [2,3] 乘积最大，返回 6"
+  ],
+  "functionName": "maxProduct",
+  "paramNames": [
+    "nums"
+  ],
+  "approachExplanation": "与最大子段和不同，乘积需要同时维护以当前元素结尾的最大值 maxP 和最小值 minP：因为一个很大的负数乘上负数会变成很大的正数。转移时三个候选取最大/最小：当前元素自身、maxP × 当前元素、minP × 当前元素。遇到 0 时两个状态会自然归零，无需特判。时间 O(n)、空间 O(1)。",
+  "referenceSolutionLines": [
+    "function maxProduct(nums) {",
+    "  let best = nums[0];",
+    "  let maxP = nums[0];",
+    "  let minP = nums[0];",
+    "  for (let i = 1; i < nums.length; i++) {",
+    "    const x = nums[i];",
+    "    const candidates = [x, maxP * x, minP * x];",
+    "    maxP = Math.max(candidates[0], candidates[1], candidates[2]);",
+    "    minP = Math.min(candidates[0], candidates[1], candidates[2]);",
+    "    if (maxP > best) best = maxP;",
+    "  }",
+    "  return best;",
+    "}"
+  ],
+  "expectedOutputs": [
+    6,
+    24,
+    0,
+    2,
+    -1,
+    24
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          2,
+          3,
+          -2,
+          4
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          -2,
+          3,
+          -4
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          -2,
+          0,
+          -1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          0,
+          2
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          -1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          2,
+          -5,
+          -2,
+          -4,
+          3
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

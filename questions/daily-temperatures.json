@@ -1,0 +1,120 @@
+{
+  "id": "daily-temperatures",
+  "difficulty": "medium",
+  "title": "等待升温的天数",
+  "descriptionLines": [
+    "给定一个每日温度数组 temperatures，返回一个数组 answer，其中 answer[i] 表示对于第 i 天，还要等多少天才会出现更高的温度。如果之后的每一天都不会升温，answer[i] = 0。",
+    "",
+    "函数签名：dailyTemperatures(temperatures)",
+    "返回值示例：temperatures = [73,74,75,71,69,72,76,73] 时返回 [1,1,4,2,1,1,0,0]"
+  ],
+  "functionName": "dailyTemperatures",
+  "paramNames": [
+    "temperatures"
+  ],
+  "approachExplanation": "单调栈：维护一个下标栈，栈内温度从栈底到栈顶单调递减。遍历到第 i 天时，若当天温度高于栈顶下标对应的温度，说明栈顶那天的「下一个更热天」就是今天，弹出并记录天数差；反复弹到栈顶不比今天低为止，最后把 i 压栈。每个下标最多入栈、出栈各一次，时间复杂度 O(n)。",
+  "referenceSolutionLines": [
+    "function dailyTemperatures(temperatures) {",
+    "  const n = temperatures.length;",
+    "  const ans = new Array(n).fill(0);",
+    "  const stack = [];",
+    "  for (let i = 0; i < n; i++) {",
+    "    while (stack.length && temperatures[stack[stack.length - 1]] < temperatures[i]) {",
+    "      const idx = stack.pop();",
+    "      ans[idx] = i - idx;",
+    "    }",
+    "    stack.push(i);",
+    "  }",
+    "  return ans;",
+    "}"
+  ],
+  "expectedOutputs": [
+    [
+      1,
+      1,
+      4,
+      2,
+      1,
+      1,
+      0,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      1,
+      0
+    ],
+    [
+      0
+    ]
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          73,
+          74,
+          75,
+          71,
+          69,
+          72,
+          76,
+          73
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          30,
+          40,
+          50,
+          60
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          90,
+          80,
+          70,
+          60
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          30,
+          60,
+          90
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          50
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

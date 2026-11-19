@@ -1,0 +1,98 @@
+{
+  "id": "longest-consecutive-seq",
+  "difficulty": "medium",
+  "title": "最长连续交易流水号",
+  "descriptionLines": [
+    "给定一个未排序的整数数组 nums（可能含重复元素），找出数字连续的最长序列的长度（序列元素在原数组中不要求相邻）。",
+    "",
+    "要求：",
+    "1. 数组可能为空，此时返回 0。",
+    "2. 尝试做到 O(n) 时间复杂度。",
+    "",
+    "函数签名：longestConsecutive(nums)",
+    "返回值示例：nums = [100,4,200,1,3,2] 时，最长连续序列是 1,2,3,4，返回 4"
+  ],
+  "functionName": "longestConsecutive",
+  "paramNames": [
+    "nums"
+  ],
+  "approachExplanation": "哈希集合 + 序列起点判定：把所有数放进 Set，只从「序列起点」开始向右数长度——即仅当 x-1 不在集合中时，x 才是某个连续序列的起点，从 x 开始不断查 x+1, x+2... 直到断开。每个元素最多被作为起点访问一次、被后续探测访问一次，总体 O(n)。关键是跳过非起点的元素，避免退化为 O(n^2)。",
+  "referenceSolutionLines": [
+    "function longestConsecutive(nums) {",
+    "  const set = new Set(nums);",
+    "  let best = 0;",
+    "  for (const x of set) {",
+    "    if (!set.has(x - 1)) {",
+    "      let len = 1;",
+    "      while (set.has(x + len)) len++;",
+    "      if (len > best) best = len;",
+    "    }",
+    "  }",
+    "  return best;",
+    "}"
+  ],
+  "expectedOutputs": [
+    4,
+    9,
+    0,
+    1,
+    3
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          100,
+          4,
+          200,
+          1,
+          3,
+          2
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          0,
+          3,
+          7,
+          2,
+          5,
+          8,
+          4,
+          6,
+          0,
+          1
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        []
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1,
+          2,
+          0,
+          1
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

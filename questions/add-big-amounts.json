@@ -1,0 +1,84 @@
+{
+  "id": "add-big-amounts",
+  "difficulty": "medium",
+  "title": "大数金额字符串相加",
+  "descriptionLines": [
+    "金融场景中金额可能超出整数表示范围。给定两个以字符串形式表示的非负整数金额 num1 和 num2，请返回它们之和的字符串形式。",
+    "",
+    "要求：",
+    "1. 两个字符串只包含数字 '0'-'9'，不含前导零（'0' 本身除外）。",
+    "2. 不能直接把字符串转成数字再相加（会丢失精度），请模拟竖式加法。",
+    "3. 结果同样不含前导零。",
+    "",
+    "函数签名：addStrings(num1, num2)",
+    "返回值示例：num1 = '456', num2 = '77' 时返回 '533'"
+  ],
+  "functionName": "addStrings",
+  "paramNames": [
+    "num1",
+    "num2"
+  ],
+  "approachExplanation": "模拟手工竖式加法：两个指针分别从两个字符串的末尾出发，每次取两个数字与进位相加，个位写入结果、十位作为新的进位。任一指针走完后继续处理剩余位与最后可能残留的进位。由于结果是从低位向高位生成的，最后需要反转。时间复杂度 O(max(m, n))。",
+  "referenceSolutionLines": [
+    "function addStrings(num1, num2) {",
+    "  let i = num1.length - 1;",
+    "  let j = num2.length - 1;",
+    "  let carry = 0;",
+    "  const parts = [];",
+    "  while (i >= 0 || j >= 0 || carry > 0) {",
+    "    const a = i >= 0 ? num1.charCodeAt(i) - 48 : 0;",
+    "    const b = j >= 0 ? num2.charCodeAt(j) - 48 : 0;",
+    "    const sum = a + b + carry;",
+    "    parts.push(sum % 10);",
+    "    carry = sum >= 10 ? 1 : 0;",
+    "    i--;",
+    "    j--;",
+    "  }",
+    "  return parts.reverse().join('');",
+    "}"
+  ],
+  "expectedOutputs": [
+    "533",
+    "134",
+    "0",
+    "1000",
+    "110164"
+  ],
+  "testInputs": [
+    {
+      "input": [
+        "456",
+        "77"
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "11",
+        "123"
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "0",
+        "0"
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "999",
+        "1"
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "50035",
+        "60129"
+      ],
+      "hidden": true
+    }
+  ]
+}

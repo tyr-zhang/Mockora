@@ -1,0 +1,91 @@
+{
+  "id": "str-str",
+  "difficulty": "easy",
+  "title": "查找日志片段首次出现位置",
+  "descriptionLines": [
+    "给定两个字符串 haystack 和 needle，请返回 needle 在 haystack 中第一次出现的下标；如果 needle 不是 haystack 的子串则返回 -1。",
+    "",
+    "要求：",
+    "1. 当 needle 为空字符串时返回 0。",
+    "2. 请自行实现匹配逻辑，不要直接调用语言内置的查找函数。",
+    "",
+    "函数签名：strStr(haystack, needle)",
+    "返回值示例：haystack = 'hello', needle = 'll' 时返回 2"
+  ],
+  "functionName": "strStr",
+  "paramNames": [
+    "haystack",
+    "needle"
+  ],
+  "approachExplanation": "朴素双指针匹配：枚举 haystack 中每个可能的起点 i（满足 i + needle 长度不超过 haystack 长度），从该起点逐字符与 needle 比对，全部匹配即返回 i。最坏时间复杂度 O(n*m)，对本题规模足够；面试中可以进一步聊 KMP 如何把复杂度降到 O(n+m)。",
+  "referenceSolutionLines": [
+    "function strStr(haystack, needle) {",
+    "  if (needle.length === 0) return 0;",
+    "  const n = haystack.length;",
+    "  const m = needle.length;",
+    "  for (let i = 0; i + m <= n; i++) {",
+    "    let ok = true;",
+    "    for (let j = 0; j < m; j++) {",
+    "      if (haystack[i + j] !== needle[j]) {",
+    "        ok = false;",
+    "        break;",
+    "      }",
+    "    }",
+    "    if (ok) return i;",
+    "  }",
+    "  return -1;",
+    "}"
+  ],
+  "expectedOutputs": [
+    0,
+    -1,
+    2,
+    0,
+    0,
+    -1
+  ],
+  "testInputs": [
+    {
+      "input": [
+        "sadbutsad",
+        "sad"
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "leetcode",
+        "leeto"
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "hello",
+        "ll"
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "a",
+        "a"
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "",
+        ""
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "aaaaa",
+        "bba"
+      ],
+      "hidden": true
+    }
+  ]
+}

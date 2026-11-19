@@ -1,0 +1,105 @@
+{
+  "id": "max-subarray-sum",
+  "difficulty": "medium",
+  "title": "交易流水的最大连续盈亏和",
+  "descriptionLines": [
+    "给定一个整数数组 gains，表示按时间顺序排列的每笔交易盈亏（正数为盈利、负数为亏损）。请找出其中连续的一段交易，使得盈亏总和最大，返回这个最大总和。",
+    "",
+    "要求：",
+    "1. 子数组必须至少包含一个元素（不允许空段）。",
+    "2. 数组可能全为负数，此时返回绝对值最小的那个负数。",
+    "3. 数组元素可能为 0。",
+    "",
+    "函数签名：maxSubArray(gains)",
+    "返回值示例：gains = [-2,1,-3,4,-1,2,1,-5,4] 时，连续段 [4,-1,2,1] 的和最大，返回 6"
+  ],
+  "functionName": "maxSubArray",
+  "paramNames": [
+    "gains"
+  ],
+  "approachExplanation": "动态规划（Kadane 算法）：用 cur 表示「以当前元素结尾的最大子段和」。转移方程为 cur = max(当前元素, cur + 当前元素)，即要么把当前元素接到前面的子段后面，要么另起一段。过程中用 best 记录 cur 出现过的最大值。因为每个元素都至少可以单独成段，全负数组也能得到正确结果。时间复杂度 O(n)，空间复杂度 O(1)。",
+  "referenceSolutionLines": [
+    "function maxSubArray(gains) {",
+    "  let best = gains[0];",
+    "  let cur = gains[0];",
+    "  for (let i = 1; i < gains.length; i++) {",
+    "    cur = Math.max(gains[i], cur + gains[i]);",
+    "    if (cur > best) best = cur;",
+    "  }",
+    "  return best;",
+    "}"
+  ],
+  "expectedOutputs": [
+    6,
+    23,
+    1,
+    -1,
+    -1,
+    0
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          -2,
+          1,
+          -3,
+          4,
+          -1,
+          2,
+          1,
+          -5,
+          4
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          5,
+          4,
+          -1,
+          7,
+          8
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          -1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          -2,
+          -1
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

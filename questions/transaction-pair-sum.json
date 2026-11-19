@@ -1,0 +1,134 @@
+{
+  "id": "transaction-pair-sum",
+  "difficulty": "easy",
+  "title": "交易金额两数配对",
+  "descriptionLines": [
+    "给定一列交易流水金额数组 transactions 和一个目标金额 target。数组中恰好存在一组两个不同位置的交易金额之和等于 target，请返回这两个交易在数组中的下标。",
+    "",
+    "要求：",
+    "1. 返回结果为长度为 2 的数组 [i, j]，且 i < j。",
+    "2. 数组下标从 0 开始。",
+    "3. 同一个位置的金额不能使用两次。",
+    "4. 题目保证每组输入恰好存在一组答案。",
+    "5. 金额和 target 均为普通整数，可能为 0 或负数。",
+    "",
+    "函数签名：findPair(transactions, target)",
+    "返回值示例：[0, 1]"
+  ],
+  "functionName": "findPair",
+  "paramNames": [
+    "transactions",
+    "target"
+  ],
+  "approachExplanation": "经典的空间换时间思路：用哈希表记录「金额 → 首次出现的下标」。遍历数组时，对每个金额先查表中是否已存在 target 与它的差值，存在即直接返回 [差值下标, 当前下标]（天然保证 i < j）。每个金额只会在被访问后才写入表，因此不会把同一个位置用两次。时间复杂度 O(n)，空间复杂度 O(n)。",
+  "referenceSolutionLines": [
+    "function findPair(transactions, target) {",
+    "  const seen = new Map();",
+    "  for (let i = 0; i < transactions.length; i++) {",
+    "    const need = target - transactions[i];",
+    "    if (seen.has(need)) return [seen.get(need), i];",
+    "    if (!seen.has(transactions[i])) seen.set(transactions[i], i);",
+    "  }",
+    "  return [];",
+    "}"
+  ],
+  "expectedOutputs": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      3,
+      4
+    ]
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          2,
+          7,
+          11,
+          15
+        ],
+        9
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          3,
+          2,
+          4
+        ],
+        6
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          3,
+          3
+        ],
+        6
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          0,
+          4,
+          3,
+          0
+        ],
+        0
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          -1,
+          -2,
+          -3,
+          -4,
+          -5
+        ],
+        -8
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1,
+          5,
+          3,
+          7,
+          9
+        ],
+        16
+      ],
+      "hidden": true
+    }
+  ]
+}

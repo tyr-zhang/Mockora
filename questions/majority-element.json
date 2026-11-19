@@ -1,0 +1,93 @@
+{
+  "id": "majority-element",
+  "difficulty": "easy",
+  "title": "多数交易类型",
+  "descriptionLines": [
+    "给定一个整数数组 nums，其中某个元素出现的次数超过了数组长度的一半（保证这样的元素存在），请找出这个多数元素。",
+    "",
+    "要求：",
+    "1. 尝试用 O(n) 时间且 O(1) 额外空间的算法（投票法）。",
+    "2. 数组非空。",
+    "",
+    "函数签名：majorityElement(nums)",
+    "返回值示例：nums = [3,2,3] 时，3 出现 2 次超过 3/2，返回 3"
+  ],
+  "functionName": "majorityElement",
+  "paramNames": [
+    "nums"
+  ],
+  "approachExplanation": "Boyer-Moore 投票算法：维护候选元素和一个计数器。遍历时若计数为 0 则把当前元素设为候选；当前元素等于候选则计数 +1，否则 -1。多数元素出现超过一半，它最终会在相互抵消中存活下来成为最终候选。时间 O(n)、空间 O(1)。",
+  "referenceSolutionLines": [
+    "function majorityElement(nums) {",
+    "  let count = 0;",
+    "  let candidate = nums[0];",
+    "  for (const x of nums) {",
+    "    if (count === 0) candidate = x;",
+    "    count += x === candidate ? 1 : -1;",
+    "  }",
+    "  return candidate;",
+    "}"
+  ],
+  "expectedOutputs": [
+    3,
+    2,
+    1,
+    5,
+    1
+  ],
+  "testInputs": [
+    {
+      "input": [
+        [
+          3,
+          2,
+          3
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          2,
+          2,
+          1,
+          1,
+          1,
+          2,
+          2
+        ]
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        [
+          1,
+          1,
+          2
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          5,
+          5,
+          5,
+          3
+        ]
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        [
+          1
+        ]
+      ],
+      "hidden": true
+    }
+  ]
+}

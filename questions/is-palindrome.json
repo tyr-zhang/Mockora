@@ -1,0 +1,41 @@
+{
+  "id": "is-palindrome",
+  "difficulty": "easy",
+  "title": "回文日志串判定",
+  "descriptionLines": [
+    "给定一个字符串 s，只考虑其中的字母和数字字符，忽略大小写与非字母数字字符，判断它是否是回文串。",
+    "",
+    "要求：",
+    "1. 空字符串，或过滤后为空的字符串，视为回文。",
+    "2. 尝试用双指针做到 O(n) 时间且不构造新字符串。",
+    "",
+    "函数签名：isPalindrome(s)",
+    "返回值示例：s = 'A man, a plan, a canal: Panama' 过滤后为回文，返回 true"
+  ],
+  "functionName": "isPalindrome",
+  "paramNames": ["s"],
+  "approachExplanation": "左右双指针向中间收拢：左指针跳过非字母数字字符，右指针同样跳过；随后比较两字符的小写形式，不同即返回 false。全部比较通过则返回 true。不需要额外构造过滤后的字符串，空间 O(1)。注意空串与全符号串的边界：指针交错后自然返回 true。",
+  "referenceSolutionLines": [
+    "function isPalindrome(s) {",
+    "  let lo = 0;",
+    "  let hi = s.length - 1;",
+    "  while (lo < hi) {",
+    "    while (lo < hi && !/[a-z0-9]/i.test(s[lo])) lo++;",
+    "    while (lo < hi && !/[a-z0-9]/i.test(s[hi])) hi--;",
+    "    if (lo < hi && s[lo].toLowerCase() !== s[hi].toLowerCase()) return false;",
+    "    lo++;",
+    "    hi--;",
+    "  }",
+    "  return true;",
+    "}"
+  ],
+  "expectedOutputs": [true, false, true, true, false, true],
+  "testInputs": [
+    { "input": ["A man, a plan, a canal: Panama"], "hidden": false },
+    { "input": ["race a car"], "hidden": false },
+    { "input": [""], "hidden": true },
+    { "input": [" "], "hidden": true },
+    { "input": ["0P"], "hidden": true },
+    { "input": ["a."], "hidden": true }
+  ]
+}

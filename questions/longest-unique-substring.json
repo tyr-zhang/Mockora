@@ -1,0 +1,82 @@
+{
+  "id": "longest-unique-substring",
+  "difficulty": "medium",
+  "title": "不含重复字符的最长子串",
+  "descriptionLines": [
+    "给定一个字符串 s，请找出其中不包含重复字符的最长子串的长度。",
+    "",
+    "要求：",
+    "1. 子串必须是连续的字符序列。",
+    "2. 区分大小写，'a' 与 'A' 视为不同字符。",
+    "3. 字符串可能为空，此时返回 0。",
+    "",
+    "函数签名：lengthOfLongestSubstring(s)",
+    "返回值示例：s = 'abcabcbb' 时，最长无重复子串是 'abc'，返回 3"
+  ],
+  "functionName": "lengthOfLongestSubstring",
+  "paramNames": [
+    "s"
+  ],
+  "approachExplanation": "滑动窗口 + 哈希表：维护窗口 [start, i]，用哈希表记录每个字符最近一次出现的下标。右指针每前进一位，若当前字符上次出现位置落在窗口内，则把左边界收缩到该位置 + 1，保证窗口内始终无重复字符。过程中记录窗口长度的最大值。每个字符最多被访问两次，时间复杂度 O(n)。",
+  "referenceSolutionLines": [
+    "function lengthOfLongestSubstring(s) {",
+    "  const last = new Map();",
+    "  let start = 0;",
+    "  let best = 0;",
+    "  for (let i = 0; i < s.length; i++) {",
+    "    const ch = s[i];",
+    "    const prev = last.get(ch);",
+    "    if (prev !== undefined && prev >= start) start = prev + 1;",
+    "    last.set(ch, i);",
+    "    if (i - start + 1 > best) best = i - start + 1;",
+    "  }",
+    "  return best;",
+    "}"
+  ],
+  "expectedOutputs": [
+    3,
+    3,
+    1,
+    0,
+    2,
+    3
+  ],
+  "testInputs": [
+    {
+      "input": [
+        "abcabcbb"
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "pwwkew"
+      ],
+      "hidden": false
+    },
+    {
+      "input": [
+        "bbbbb"
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        ""
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "aab"
+      ],
+      "hidden": true
+    },
+    {
+      "input": [
+        "dvdf"
+      ],
+      "hidden": true
+    }
+  ]
+}

@@ -3,7 +3,8 @@ import { z } from "zod";
 import { configureOpenAI } from "@/lib/openaiClient";
 import { env } from "@/lib/env";
 import { runAlgorithmSubmission } from "@/lib/codeRunner";
-import type { AlgorithmQuestion, InterviewReport, TopicRecord } from "@/types/interview";
+import { pickBankQuestion } from "@/lib/bankLoader";
+import type { InterviewReport, StoredAlgorithmQuestion, TopicRecord } from "@/types/interview";
 
 /** 统一的模型参数：推理强度由 OPENAI_REASONING_EFFORT 配置，避免默认 high 导致响应过慢 */
 const modelSettings = {
@@ -115,6 +116,40 @@ export async function streamLearningFollowUp(
   return runTextStream(learningFollowUpAgent, input, onDelta);
 }
 
+/* ---------------- 简历清洗 Agent：剔除网页/PDF 抽取文本中的模板噪音 ---------------- */
+
+/**
+ * 500d.me 等在线简历页面的 HTML 抽取结果中往往一半以上是模板噪音（导航、按钮、
+ * 广告、推荐模板等），全量塞进后续每轮面试的 prompt 既浪费 token 也干扰出题质量。
+ * 这里用一次模型调用把原始文本清洗成结构化的干净简历；失败时由调用方回退原始文本。
+ */
+const resumeCleanerAgent = Agent.create({
+  name: "ResumeCleaner",
+  model: env.openaiModel,
+  modelSettings,
+  instructions: [
+    "你是一名简历解析助手。输入是从网页或 PDF 中抽取的原始文本，其中往往混杂大量模板噪音（导航、按钮文字、广告、推荐模板等）。",
+    "请从中提取真正的简历内容，输出一份干净的纯文本简历，按如下结构组织：",
+    "【基本信息】【求职意向】【技能特长】【工作经历】【项目经历】【教育背景】",
+    "规则：",
+    "1. 只保留与候选人本人简历相关的事实信息，删除所有模板、导航、广告、交互提示文字。",
+    "2. 保留全部事实与量化数据（时间、公司、职责、技术栈、业务结果），不要编造、改写或翻译事实。",
+    "3. 尽量紧凑，合并重复内容。",
+    "4. 如果输入里根本找不到简历内容，只输出 NO_RESUME_FOUND。",
+    "只输出清洗后的简历正文，不要任何解释或前后缀。",
+  ].join("\n"),
+});
+
+export async function cleanResumeText(rawText: string): Promise<string> {
+  configureOpenAI();
+  const result = await run(resumeCleanerAgent, "【待清洗的原始文本】\n" + rawText);
+  const cleaned = result.finalOutput!.trim();
+  if (!cleaned || cleaned === "NO_RESUME_FOUND") {
+    throw new Error("未能从输入中识别出有效的简历内容");
+  }
+  return cleaned;
+}
+
 /* ---------------- 考试模式：面试官 Agent（先快速决策，再流式生成要说的话） ---------------- */
 
 const MIN_TOPICS = 3;
@@ -209,129 +244,44 @@ export async function isTechnicalInterview(resumeText: string, targetRole: strin
   return result.finalOutput!.isTechnical;
 }
 
-const AlgorithmQuestionSchema = z.object({
-  title: z.string().describe("算法题标题，简短"),
-  description: z.string().describe("题目描述，包含输入输出说明和示例，纯文本/Markdown风格"),
-  functionName: z
-    .string()
-    .describe("候选人需要实现的函数名，必须是合法的 JS/Python 标识符（小写字母+下划线或驼峰），如 twoSum"),
-  paramNames: z.array(z.string()).min(1).max(4).describe("函数参数名列表，按顺序"),
-  approachExplanation: z.string().describe("参考解法思路讲解，供学习模式查看答案时展示，不少于3句话"),
-  referenceSolutionJs: z
-    .string()
-    .describe(
-      "一份正确、可直接运行的 JavaScript 参考实现，必须定义名为 functionName 的函数且签名与 paramNames 一致。仅用于内部校验测试用例期望值的正确性，不会直接展示给候选人。"
-    ),
-  testCases: z
-    .array(
-      z.object({
-        inputJson: z
-          .string()
-          .describe(
-            '必须是且只能是一段可被 JSON.parse 直接解析的 JSON 数组字符串，数组长度必须严格等于 paramNames 的个数，每个元素依次对应一个参数的值，例如 paramNames=["nums","target"] 时写成 "[[2,7,11,15],9]"；如果只有 1 个参数且该参数本身是数组，也必须额外包一层，写成 "[[\"a\",\"b\"]]" 而不是 "[\"a\",\"b\"]"。严禁包含任何说明文字、注释、"|"分隔的额外内容或其他非 JSON 字符。'
-          ),
-        hidden: z.boolean().describe("是否为隐藏用例：前2个必须为 false（可见示例），其余应为 true"),
-      })
-    )
-    .min(4)
-    .max(6)
-    .describe("只需给出输入，期望输出会通过运行 referenceSolutionJs 自动计算，确保与参考实现严格一致"),
-});
-
-const algorithmQuestionAgent = Agent.create({
-  name: "AlgorithmQuestionGenerator",
-  model: env.openaiModel,
-  modelSettings,
-  outputType: AlgorithmQuestionSchema,
-  instructions: "你是一名技术面试官，需要为候选人出一道适合在面试中现场编码的算法题（难度适中，考察基础数据结构/算法能力，10-20分钟能完成的规模，不要出过于复杂的题目）。结合候选人的简历与目标岗位方向适当调整考察方向（例如后端可以考察数组/哈希/字符串，前端可以适度降低难度），但不要出和具体业务框架强绑定的题目，必须是通用算法题。务必保证：1. functionName、paramNames 和题目描述中的函数签名完全一致。2. 所有测试用例的参数、返回值都是可以被 JSON 序列化的简单值（数字、字符串、布尔、数组、普通对象），不要使用特殊类型。3. 至少提供 2 个非隐藏（hidden=false）示例用例用于候选人理解题意，剩余为隐藏用例用于校验正确性，覆盖边界情况。",
-});
+/* ---------------- 算法题：本地题库选题 + 试跑参考实现计算期望输出 ---------------- */
 
 /**
- * 宽松解析模型给出的 inputJson：优先直接 JSON.parse，若模型混入了多余说明文字，
- * 尝试提取字符串中首个完整的顶层 JSON 数组子串再解析，避免因模型输出不规范而整道题作废。
+ * 从内置题库抽题并构建完整题目（含全部测试用例与期望输出）。
+ * 此前由大模型现场出题（结构化输出 + 参考实现校验），单次经常超过 5 分钟；
+ * 改为题库后本函数只有一次本地子进程试跑，耗时毫秒级。
+ * 期望输出不手写，而是实际运行参考实现得到，保证用例与参考解严格一致。
  */
-function parseInputJsonLenient(raw: string): unknown[] | null {
-  try {
-    const value = JSON.parse(raw);
-    if (Array.isArray(value)) return value;
-  } catch {
-    // fallthrough
-  }
-
-  const start = raw.indexOf("[");
-  if (start === -1) return null;
-  let depth = 0;
-  for (let i = start; i < raw.length; i++) {
-    if (raw[i] === "[") depth++;
-    else if (raw[i] === "]") {
-      depth--;
-      if (depth === 0) {
-        const candidate = raw.slice(start, i + 1);
-        try {
-          const value = JSON.parse(candidate);
-          if (Array.isArray(value)) return value;
-        } catch {
-          return null;
-        }
-        return null;
-      }
-    }
-  }
-  return null;
-}
-
 export async function generateAlgorithmQuestion(
   resumeText: string,
   targetRole: string
-): Promise<AlgorithmQuestion> {
-  configureOpenAI();
-  const input = `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n请生成一道适合该候选人的算法编程题。`;
-  const result = await run(algorithmQuestionAgent, input);
-  const raw = result.finalOutput!;
+): Promise<StoredAlgorithmQuestion> {
+  const q = await pickBankQuestion(resumeText, targetRole);
 
-  const paramCount = raw.paramNames.length;
-  const inputsOnly = raw.testCases.map((tc) => {
-    const parsed = parseInputJsonLenient(tc.inputJson);
-    if (!parsed) {
-      throw new Error("算法题测试用例解析失败，请重试");
-    }
-    // 模型有时会在单参数（尤其该参数本身是数组）场景下，把参数值直接当作 inputJson 顶层数组，
-    // 而不是按"参数列表"要求再包一层，导致调用时被错误地展开成多个参数。此处按参数个数纠正。
-    const args = paramCount === 1 && parsed.length !== 1 ? [parsed] : parsed;
-    return { input: args, hidden: tc.hidden };
-  });
-  if (!inputsOnly.some((tc) => !tc.hidden)) {
-    throw new Error("算法题缺少可见示例用例，请重试");
-  }
-
-  // 期望输出不直接采用模型手写的值，而是实际运行模型给出的参考实现得到，
-  // 避免模型在"出题"和"算答案"两件事上自相矛盾导致测试用例本身就是错的。
   const probe = await runAlgorithmSubmission(
     "javascript",
-    raw.referenceSolutionJs,
-    raw.functionName,
-    inputsOnly.map((tc) => ({ input: tc.input, expectedOutput: null, hidden: tc.hidden }))
+    q.referenceSolutionJs,
+    q.functionName,
+    q.testInputs.map((tc) => ({ input: tc.input, expectedOutput: null, hidden: tc.hidden }))
   );
   if (probe.runtimeError) {
-    throw new Error(`算法题参考实现执行失败（${probe.runtimeError}），请重试`);
+    throw new Error("算法题参考实现执行失败（" + probe.runtimeError + "，题目 " + q.id + "）");
   }
   if (probe.results.some((r) => r.error)) {
-    throw new Error("算法题参考实现在部分用例上报错，请重试");
+    throw new Error("算法题参考实现在部分用例上报错（题目 " + q.id + "）");
   }
 
-  const testCases = inputsOnly.map((tc, i) => ({
-    input: tc.input,
-    expectedOutput: probe.results[i].actual,
-    hidden: tc.hidden,
-  }));
-
   return {
-    title: raw.title,
-    description: raw.description,
-    functionName: raw.functionName,
-    paramNames: raw.paramNames,
-    approachExplanation: raw.approachExplanation,
-    testCases,
+    title: q.title,
+    description: q.description,
+    functionName: q.functionName,
+    paramNames: q.paramNames,
+    approachExplanation: q.approachExplanation,
+    testCases: q.testInputs.map((tc, i) => ({
+      input: tc.input,
+      expectedOutput: probe.results[i].actual,
+      hidden: tc.hidden,
+    })),
   };
 }
 
