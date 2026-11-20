@@ -13,6 +13,7 @@ export default function HomePage() {
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState("");
   const [targetRole, setTargetRole] = useState("");
+  const [jobRequirements, setJobRequirements] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +53,11 @@ export default function HomePage() {
         throw new Error(data.error || "简历解析失败");
       }
 
-      saveSetup({ resumeText: data.resumeText, targetRole: targetRole.trim() });
+      saveSetup({
+        resumeText: data.resumeText,
+        targetRole: targetRole.trim(),
+        jobRequirements: jobRequirements.trim() || undefined,
+      });
       router.push(mode === "learn" ? "/learn" : "/exam");
     } catch (err) {
       setError(err instanceof Error ? err.message : "发生未知错误");
@@ -91,6 +96,14 @@ export default function HomePage() {
           placeholder="例如：前端开发工程师 / 后端 Java 开发 / 产品经理"
           value={targetRole}
           onChange={(e) => setTargetRole(e.target.value)}
+        />
+
+        <label>岗位要求 / JD（可选）</label>
+        <textarea
+          rows={5}
+          placeholder="粘贴目标岗位的招聘 JD 或岗位要求，AI 出题与评估将优先覆盖其中的关键能力项；留空则仅根据简历与岗位方向出题"
+          value={jobRequirements}
+          onChange={(e) => setJobRequirements(e.target.value)}
         />
 
         <label>简历来源</label>

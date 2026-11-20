@@ -17,6 +17,8 @@ export interface TopicRecord {
 export interface InterviewSetup {
   resumeText: string;
   targetRole: string;
+  /** 岗位要求/JD（可选），出题与评估会结合其关键能力项 */
+  jobRequirements?: string;
 }
 
 export interface ReportDimension {

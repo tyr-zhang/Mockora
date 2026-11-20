@@ -23,7 +23,7 @@ interface LearningItem {
 
 export default function LearnPage() {
   const router = useRouter();
-  const [setup, setSetup] = useState<{ resumeText: string; targetRole: string } | null>(null);
+  const [setup, setSetup] = useState<{ resumeText: string; targetRole: string; jobRequirements?: string } | null>(null);
   const [items, setItems] = useState<LearningItem[]>([]);
   const [loadingNext, setLoadingNext] = useState(false);
   const [followUpDraft, setFollowUpDraft] = useState("");
@@ -50,7 +50,7 @@ export default function LearnPage() {
       fetch(apiPath("/api/interview/classify-technical"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole }),
+        body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole, jobRequirements: setup.jobRequirements }),
       })
         .then((res) => res.json())
         .then((data) => setIsTechnical(Boolean(data.isTechnical)))
@@ -92,7 +92,7 @@ export default function LearnPage() {
   }
 
   async function fetchNextQuestion(
-    s: { resumeText: string; targetRole: string },
+    s: { resumeText: string; targetRole: string; jobRequirements?: string },
     currentItems: LearningItem[]
   ) {
     setLoadingNext(true);
@@ -124,6 +124,7 @@ export default function LearnPage() {
         body: JSON.stringify({
           resumeText: s.resumeText,
           targetRole: s.targetRole,
+          jobRequirements: s.jobRequirements,
           history: toHistory(currentItems),
         }),
       });
@@ -163,7 +164,7 @@ export default function LearnPage() {
   }
 
 
-  async function fetchAlgorithmQuestion(s: { resumeText: string; targetRole: string }, currentItems: LearningItem[]) {
+  async function fetchAlgorithmQuestion(s: { resumeText: string; targetRole: string; jobRequirements?: string }, currentItems: LearningItem[]) {
     setLoadingNext(true);
     setError(null);
     setAlgorithmUsed(true);
@@ -190,7 +191,7 @@ export default function LearnPage() {
       const res = await fetch(apiPath("/api/algorithm/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole }),
+        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, jobRequirements: s.jobRequirements }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "生成算法题失败");

@@ -8,9 +8,10 @@ import { createSseResponse } from "@/lib/sse";
  */
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { resumeText, targetRole, question } = body as {
+  const { resumeText, targetRole, jobRequirements, question } = body as {
     resumeText: string;
     targetRole: string;
+    jobRequirements?: string;
     question: string;
   };
 
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
   }
 
   return createSseResponse(async (emit) => {
-    const answer = await streamReferenceAnswer(resumeText, targetRole, question, (chunk) =>
+    const answer = await streamReferenceAnswer(resumeText, targetRole, jobRequirements, question, (chunk) =>
       emit({ type: "answer_delta", chunk })
     );
     emit({ type: "done", answer });

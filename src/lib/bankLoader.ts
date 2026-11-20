@@ -110,15 +110,20 @@ const RECENT_WINDOW = 5;
 /**
  * 从题库随机抽一道题。目标岗位/简历里出现资深/架构类信号时优先中等难度题。
  */
-export async function pickBankQuestion(resumeText: string, targetRole: string): Promise<BankQuestion> {
+export async function pickBankQuestion(
+  resumeText: string,
+  targetRole: string,
+  jobRequirements?: string
+): Promise<BankQuestion> {
   const bank = await loadQuestionBank();
   if (bank.length === 0) {
     throw new Error("题库为空或全部非法，请检查 questions 目录（可用 npm run bank:check 校验）");
   }
 
   const seniorSignal =
-    /架构师|架构|资深|专家|高级|architect|senior|staff|principal/i.test(targetRole) ||
-    (resumeText ? resumeText.length > 5000 : false);
+    /架构师|架构|资深|专家|高级|architect|senior|staff|principal/i.test(
+      targetRole + " " + (jobRequirements ?? "")
+    ) || (resumeText ? resumeText.length > 5000 : false);
 
   let pool = bank.filter((q) => !recentIds.includes(q.id));
   if (pool.length === 0) pool = bank;

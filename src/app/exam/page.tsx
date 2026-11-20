@@ -12,7 +12,7 @@ type Phase = "waiting_ai" | "waiting_user" | "generating_report" | "report_faile
 
 export default function ExamPage() {
   const router = useRouter();
-  const [setup, setSetup] = useState<{ resumeText: string; targetRole: string } | null>(null);
+  const [setup, setSetup] = useState<{ resumeText: string; targetRole: string; jobRequirements?: string } | null>(null);
   const [closedTopics, setClosedTopics] = useState<TopicRecord[]>([]);
   const [currentTopic, setCurrentTopic] = useState<TopicRecord | null>(null);
   const [streamingMessage, setStreamingMessage] = useState("");
@@ -48,7 +48,7 @@ export default function ExamPage() {
       fetch(apiPath("/api/interview/classify-technical"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole }),
+        body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole, jobRequirements: setup.jobRequirements }),
       })
         .then((res) => res.json())
         .then((data) => {
@@ -62,7 +62,7 @@ export default function ExamPage() {
   }, [setup]);
 
   async function requestNextTurn(
-    s: { resumeText: string; targetRole: string },
+    s: { resumeText: string; targetRole: string; jobRequirements?: string },
     history: TopicRecord[],
     openTopic: TopicRecord | null
   ) {
@@ -78,7 +78,7 @@ export default function ExamPage() {
       const res = await fetch(apiPath("/api/exam/turn"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, history: fullHistory }),
+        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, jobRequirements: s.jobRequirements, history: fullHistory }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -149,7 +149,7 @@ export default function ExamPage() {
   }
 
   async function startAlgorithmTopic(
-    s: { resumeText: string; targetRole: string },
+    s: { resumeText: string; targetRole: string; jobRequirements?: string },
     newClosed: TopicRecord[],
     mySeq: number
   ) {
@@ -159,7 +159,7 @@ export default function ExamPage() {
       const res = await fetch(apiPath("/api/algorithm/generate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole }),
+        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, jobRequirements: s.jobRequirements }),
       });
       const data = await res.json();
       if (reqSeq.current !== mySeq) return;
@@ -212,7 +212,7 @@ export default function ExamPage() {
   }
 
   async function generateReport(
-    s: { resumeText: string; targetRole: string },
+    s: { resumeText: string; targetRole: string; jobRequirements?: string },
     history: TopicRecord[],
     seq?: number
   ) {
@@ -224,7 +224,7 @@ export default function ExamPage() {
       const res = await fetch(apiPath("/api/exam/report"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, history }),
+        body: JSON.stringify({ resumeText: s.resumeText, targetRole: s.targetRole, jobRequirements: s.jobRequirements, history }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "生成报告失败");
@@ -259,7 +259,12 @@ export default function ExamPage() {
       const res = await fetch(apiPath("/api/exam/answer"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: setup.resumeText, targetRole: setup.targetRole, question }),
+        body: JSON.stringify({
+          resumeText: setup.resumeText,
+          targetRole: setup.targetRole,
+          jobRequirements: setup.jobRequirements,
+          question,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

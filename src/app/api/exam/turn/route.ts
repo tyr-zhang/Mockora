@@ -5,9 +5,10 @@ import type { TopicRecord } from "@/types/interview";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { resumeText, targetRole, history } = body as {
+  const { resumeText, targetRole, jobRequirements, history } = body as {
     resumeText: string;
     targetRole: string;
+    jobRequirements?: string;
     history: TopicRecord[];
   };
 
@@ -22,6 +23,7 @@ export async function POST(req: NextRequest) {
     const { action, message } = await streamNextExamTurn(
       resumeText,
       targetRole,
+      jobRequirements,
       history || [],
       (chunk) => emit({ type: "message_delta", chunk })
     );

@@ -5,6 +5,7 @@ const KEY = "mockora:setup";
 export interface StoredSetup {
   resumeText: string;
   targetRole: string;
+  jobRequirements?: string;
 }
 
 export function saveSetup(setup: StoredSetup) {

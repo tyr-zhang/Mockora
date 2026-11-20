@@ -11,7 +11,12 @@ const modelSettings = {
   reasoning: { effort: env.reasoningEffort as "low" | "medium" | "high" | "none" },
 };
 
-function transcriptToText(resumeText: string, targetRole: string, history: TopicRecord[]) {
+function transcriptToText(
+  resumeText: string,
+  targetRole: string,
+  jobRequirements: string | undefined,
+  history: TopicRecord[]
+) {
   const historyText = history
     .map((topic) => {
       const lines = topic.messages
@@ -22,7 +27,7 @@ function transcriptToText(resumeText: string, targetRole: string, history: Topic
     })
     .join("\n\n");
 
-  return `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n【已完成的面试记录】\n${
+  return `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n${jobRequirements ? `【岗位要求】\n${jobRequirements}\n\n` : ""}【已完成的面试记录】\n${
     historyText || "（暂无，这是第一个问题）"
   }`;
 }
@@ -53,7 +58,7 @@ const learningQuestionAgent = Agent.create({
   modelSettings,
   instructions: `你是一名资深技术面试官，正在为候选人准备"学习模式"的模拟面试训练。
 规则：
-1. 根据候选人的简历内容和目标求职方向，结合已经问过的题目记录，生成下一道有针对性的面试题目（避免和历史题目重复或过于相似）。
+1. 根据候选人的简历内容、目标求职方向和岗位要求（若提供，通常来自招聘 JD），结合已经问过的题目记录，生成下一道有针对性的面试题目（避免和历史题目重复或过于相似）。出题应优先覆盖岗位要求中强调的能力项。
 2. 题目难度应循序渐进，并尽量覆盖候选人简历中提到的不同技能点/项目经历。
 3. 只输出题目本身，不要输出参考答案，不要输出"题目："之类的前缀，不要输出其他解释性文字。`,
 });
@@ -69,11 +74,12 @@ const learningAnswerAgent = Agent.create({
 export async function streamLearningQuestion(
   resumeText: string,
   targetRole: string,
+  jobRequirements: string | undefined,
   history: TopicRecord[],
   onQuestionDelta: (chunk: string) => void,
   onAnswerDelta: (chunk: string) => void
 ) {
-  const baseInput = transcriptToText(resumeText, targetRole, history);
+  const baseInput = transcriptToText(resumeText, targetRole, jobRequirements, history);
 
   const question = await runTextStream(
     learningQuestionAgent,
@@ -126,11 +132,12 @@ export async function streamLearningFollowUp(
 export async function streamReferenceAnswer(
   resumeText: string,
   targetRole: string,
+  jobRequirements: string | undefined,
   question: string,
   onDelta: (chunk: string) => void
 ) {
   const input =
-    `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n【本题题目】${question}\n\n请给出这道题的参考答案。`;
+    `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n${jobRequirements ? `【岗位要求】\n${jobRequirements}\n\n` : ""}【本题题目】${question}\n\n请给出这道题的参考答案。`;
   return runTextStream(learningAnswerAgent, input, onDelta);
 }
 
@@ -187,7 +194,7 @@ const examDecisionAgent = Agent.create({
   modelSettings,
   outputType: ExamDecisionSchema,
   instructions: `你是一名资深技术面试官，正在主持一场"考试模式"的模拟面试。
-根据候选人的简历、目标岗位方向，以及已经进行的问答记录（包含若干"主题"，每个主题下可能有多轮追问），只需要决定下一步动作：
+根据候选人的简历、目标岗位方向、岗位要求（若提供），以及已经进行的问答记录（包含若干"主题"，每个主题下可能有多轮追问），只需要决定下一步动作：
 - follow_up：如果候选人刚才的回答不够完整/有疑点/值得深挖，针对该回答继续追问（同一主题内）。
 - next_topic：如果当前主题已经问得足够清楚，提出一个新的主题方向的问题。
 - end_interview：如果已完成的主题数量达到 ${MIN_TOPICS} 个及以上，且你认为已经充分评估候选人能力，可以结束面试。已完成的主题数量达到 ${MAX_TOPICS} 个时必须结束面试。
@@ -203,7 +210,7 @@ const examMessageAgent = Agent.create({
 
 根据给定的【下一步动作】生成你接下来要对候选人说的话：
 - follow_up：针对候选人刚才的回答继续追问，可以先用一两句话呼应候选人上一轮的回答，但不要评价对错。
-- next_topic：提出一个新的主题方向的问题，覆盖简历中不同的技能点/项目经历，循序渐进，避免重复。
+- next_topic：提出一个新的主题方向的问题，优先考察岗位要求（若提供）中尚未覆盖的关键能力，其次覆盖简历中不同的技能点/项目经历，循序渐进，避免重复。
 - end_interview：写一句简短的面试结束语（如感谢候选人参加面试），不要透露任何评分信息。
 
 只输出这段话本身，不要输出"面试官："之类的前缀，不要输出其他解释性文字。`,
@@ -217,13 +224,14 @@ export interface ExamTurnResult {
 export async function streamNextExamTurn(
   resumeText: string,
   targetRole: string,
+  jobRequirements: string | undefined,
   history: TopicRecord[],
   onMessageDelta: (chunk: string) => void
 ): Promise<ExamTurnResult> {
   configureOpenAI();
   const completedTopics = history.length;
   const baseInput =
-    transcriptToText(resumeText, targetRole, history) +
+    transcriptToText(resumeText, targetRole, jobRequirements, history) +
     `\n\n【当前已完成的主题数量】${completedTopics}`;
 
   const decisionResult = await run(examDecisionAgent, baseInput + "\n请决定下一步动作。");
@@ -255,9 +263,16 @@ const technicalCheckAgent = Agent.create({
   instructions: "根据候选人的简历内容和目标求职方向，判断该岗位是否属于技术类岗位（需要具备编程/算法能力，例如前端、后端、算法工程师、测试开发、数据开发等）。产品经理、运营、销售、HR、设计等非编码岗位应判定为 false。",
 });
 
-export async function isTechnicalInterview(resumeText: string, targetRole: string): Promise<boolean> {
+export async function isTechnicalInterview(
+  resumeText: string,
+  targetRole: string,
+  jobRequirements: string | undefined
+): Promise<boolean> {
   configureOpenAI();
-  const input = `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n请判断该岗位是否为技术类岗位。`;
+  const input =
+    `【候选人简历】\n${resumeText}\n\n【目标岗位/方向】\n${targetRole}\n\n${
+      jobRequirements ? `【岗位要求】\n${jobRequirements}\n\n` : ""
+    }请判断该岗位是否为技术类岗位。`;
   const result = await run(technicalCheckAgent, input);
   return result.finalOutput!.isTechnical;
 }
@@ -272,9 +287,10 @@ export async function isTechnicalInterview(resumeText: string, targetRole: strin
  */
 export async function generateAlgorithmQuestion(
   resumeText: string,
-  targetRole: string
+  targetRole: string,
+  jobRequirements: string | undefined
 ): Promise<StoredAlgorithmQuestion> {
-  const q = await pickBankQuestion(resumeText, targetRole);
+  const q = await pickBankQuestion(resumeText, targetRole, jobRequirements);
 
   const probe = await runAlgorithmSubmission(
     "javascript",
@@ -343,17 +359,19 @@ const reportAgent = Agent.create({
 2. 各维度评价需结合候选人的实际回答内容，给出具体依据，不要空泛。
 3. 逐题点评需要指出具体的优点和不足。
 4. 改进建议要具体、可执行，针对候选人在这场面试中暴露出的真实短板给建议，不要给泛泛而谈的通用建议。
-5. 若记录中出现标注为"算法编程题"的主题，其中会包含候选人提交的代码以及测试用例通过情况（通过/失败数量），请单独按"算法与编码能力"维度评价，重点关注代码正确性（测试用例通过率）、边界处理和代码质量，不要仅凭代码长短判断。`,
+5. 若记录中出现标注为"算法编程题"的主题，其中会包含候选人提交的代码以及测试用例通过情况（通过/失败数量），请单独按"算法与编码能力"维度评价，重点关注代码正确性（测试用例通过率）、边界处理和代码质量，不要仅凭代码长短判断。
+6. 若记录中提供了【岗位要求】，需对照其中列出的关键能力项评估匹配度，在总体评价与改进建议中明确指出哪些能力已充分考察、哪些尚未覆盖。`,
 });
 
 export async function generateInterviewReport(
   resumeText: string,
   targetRole: string,
+  jobRequirements: string | undefined,
   history: TopicRecord[]
 ): Promise<InterviewReport> {
   configureOpenAI();
   const input =
-    transcriptToText(resumeText, targetRole, history) +
+    transcriptToText(resumeText, targetRole, jobRequirements, history) +
     "\n\n面试已结束，请基于以上完整记录生成面试评估报告。";
   const result = await run(reportAgent, input);
   return result.finalOutput!;
